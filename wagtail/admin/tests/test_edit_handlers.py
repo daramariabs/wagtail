@@ -3,6 +3,8 @@ from datetime import date, datetime, timezone
 from functools import wraps
 from typing import Any, Optional
 from unittest import mock
+from django.db import models
+from django.test import override_settings
 
 from django import VERSION as DJANGO_VERSION
 from django import forms
@@ -62,6 +64,7 @@ from wagtail.test.testapp.models import (
     ValidatedPage,
 )
 from wagtail.test.utils import WagtailTestUtils
+from wagtail.test.testapp.models import SimplePage
 
 
 class TestGetFormForModel(TestCase):
@@ -826,7 +829,9 @@ class TestFormatValueForDisplay(TestCase):
         result = self.panel.format_value_for_display(Page.objects.all())
         self.assertEqual(result, "Root, Welcome to your new Wagtail site!")
 
-
+@override_settings(
+    WAGTAILADMIN_ADVANCED_SETTINGS_MODEL="test_edit_handlers.CustomSettings"
+)
 class TestFieldPanel(TestCase):
     def setUp(self):
         self.request = RequestFactory().get("/")
@@ -1042,6 +1047,28 @@ class TestFieldPanel(TestCase):
         self.assertIn("instance=Abergavenny sheepdog trials", field_panel_repr)
         self.assertIn("request=<WSGIRequest: GET '/'>", field_panel_repr)
         self.assertIn("form=EventPageForm", field_panel_repr)
+
+    def test_hidden_field_does_not_render_label(self):
+        # SETUP: Use o SimplePage, que agora tem nosso campo
+        root_page = Page.objects.get(id=1)
+        page = SimplePage(
+            title="Página Simples de Teste",
+            slug="simple-test-page",
+            content="conteúdo",
+            hidden_field_for_test="qualquer valor", # Usamos o novo nome do campo
+        )
+        root_page.add_child(instance=page)
+
+        # AÇÃO: Faça uma requisição para a página de edição
+        response = self.client.get(f"/admin/pages/{page.id}/edit/")
+        self.assertEqual(response.status_code, 200)
+
+        # ASSERÇÃO: Verifique se o rótulo do nosso campo NÃO está na resposta
+        self.assertNotContains(
+            response,
+            '<label for="id_hidden_field_for_test">Hidden field for test:</label>',
+            msg_prefix="O rótulo de um campo oculto não deveria ser renderizado",
+        )
 
 
 class TestFieldRowPanel(TestCase):

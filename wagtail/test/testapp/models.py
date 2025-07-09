@@ -6,6 +6,7 @@ import string
 import uuid
 
 from django import forms
+from wagtail.admin.panels import FieldPanel
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -197,10 +198,11 @@ class RelatedLink(LinkFields):
 class SimplePage(Page):
     content = models.TextField()
     page_description = "A simple page description"
+    hidden_field_for_test = models.CharField(max_length=255, blank=True)
 
     content_panels = [
-        TitleFieldPanel("title", classname="title"),
         FieldPanel("content"),
+        FieldPanel("hidden_field_for_test", widget=forms.HiddenInput),
     ]
 
     def get_admin_display_title(self):
