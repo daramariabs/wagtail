@@ -11,6 +11,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core import checks
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.test import RequestFactory, TestCase, override_settings
@@ -65,6 +66,7 @@ from wagtail.test.testapp.models import (
 )
 from wagtail.test.utils import WagtailTestUtils
 from wagtail.test.testapp.models import SimplePage
+from wagtail.test.utils import WagtailTestUtils
 
 
 class TestGetFormForModel(TestCase):
@@ -832,7 +834,7 @@ class TestFormatValueForDisplay(TestCase):
 @override_settings(
     WAGTAILADMIN_ADVANCED_SETTINGS_MODEL="test_edit_handlers.CustomSettings"
 )
-class TestFieldPanel(TestCase):
+class TestFieldPanel(WagtailTestUtils,TestCase):
     def setUp(self):
         self.request = RequestFactory().get("/")
         user = AnonymousUser()  # technically, Anonymous users cannot access the admin
@@ -1048,26 +1050,30 @@ class TestFieldPanel(TestCase):
         self.assertIn("request=<WSGIRequest: GET '/'>", field_panel_repr)
         self.assertIn("form=EventPageForm", field_panel_repr)
 
-    def test_hidden_field_does_not_render_label(self):
-        # SETUP: Use o SimplePage, que agora tem nosso campo
+    def test_hidden_field_label_is_not_rendered(self):
+        # 1. SETUP DE PERMISSÕES
+        user = self.login()
+        content_type = ContentType.objects.get_for_model(SimplePage)
+        permission = Permission.objects.get(content_type=content_type, codename="change_simplepage")
+        user.user_permissions.add(permission)
+
+        # 2. SETUP DA PÁGINA
         root_page = Page.objects.get(id=1)
         page = SimplePage(
-            title="Página Simples de Teste",
-            slug="simple-test-page",
+            title="Página de Teste com Campo Oculto",
+            slug="hidden-field-test",
             content="conteúdo",
-            hidden_field_for_test="qualquer valor", # Usamos o novo nome do campo
+            hidden_field_for_test="valor secreto",
         )
         root_page.add_child(instance=page)
 
-        # AÇÃO: Faça uma requisição para a página de edição
+        # 3. AÇÃO
         response = self.client.get(f"/admin/pages/{page.id}/edit/")
         self.assertEqual(response.status_code, 200)
 
-        # ASSERÇÃO: Verifique se o rótulo do nosso campo NÃO está na resposta
         self.assertNotContains(
             response,
             '<label for="id_hidden_field_for_test">Hidden field for test:</label>',
-            msg_prefix="O rótulo de um campo oculto não deveria ser renderizado",
         )
 
 

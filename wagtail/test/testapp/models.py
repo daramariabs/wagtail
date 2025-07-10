@@ -197,16 +197,14 @@ class RelatedLink(LinkFields):
 # Simple page
 class SimplePage(Page):
     content = models.TextField()
-    page_description = "A simple page description"
+    # Adicione nosso novo campo para o teste
     hidden_field_for_test = models.CharField(max_length=255, blank=True)
 
-    content_panels = [
+    content_panels = Page.content_panels + [
         FieldPanel("content"),
+        # Adicione o painel para nosso campo, usando o widget oculto
         FieldPanel("hidden_field_for_test", widget=forms.HiddenInput),
     ]
-
-    def get_admin_display_title(self):
-        return "%s (simple page)" % super().get_admin_display_title()
 
 
 class MultiPreviewModesPage(Page):
