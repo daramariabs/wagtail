@@ -1,2 +1,14 @@
 {% load wagtailadmin_tags %}
 {% formattedfieldfromcontext %}
+
+{% if not field.is_hidden %}
+    <label for="{{ field.id_for_label }}" class="w-label {{ label_classes }}">
+        {{ field.label }}
+        {% if field.required %}<span class="w-required-mark">*</span>{% endif %}
+        {% if field.help_text %}
+            <span class="w-help-text" title="{{ field.help_text|striptags }}">
+                <svg class="icon icon-help w-icon-help" aria-hidden="true" focusable="false"><use href="#icon-help"></use></svg>
+            </span>
+        {% endif %}
+    </label>
+{% endif %}

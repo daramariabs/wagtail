@@ -194,15 +194,12 @@ class RelatedLink(LinkFields):
         abstract = True
 
 
-# Simple page
 class SimplePage(Page):
     content = models.TextField()
-    # Adicione nosso novo campo para o teste
     hidden_field_for_test = models.CharField(max_length=255, blank=True)
 
     content_panels = Page.content_panels + [
         FieldPanel("content"),
-        # Adicione o painel para nosso campo, usando o widget oculto
         FieldPanel("hidden_field_for_test", widget=forms.HiddenInput),
     ]
 

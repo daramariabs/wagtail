@@ -1050,24 +1050,21 @@ class TestFieldPanel(WagtailTestUtils,TestCase):
         self.assertIn("request=<WSGIRequest: GET '/'>", field_panel_repr)
         self.assertIn("form=EventPageForm", field_panel_repr)
 
-    def test_hidden_field_label_is_not_rendered(self):
-        # 1. SETUP DE PERMISSÕES
+    def test_hidden_field_label_does_not_render_label(self):
         user = self.login()
         content_type = ContentType.objects.get_for_model(SimplePage)
         permission = Permission.objects.get(content_type=content_type, codename="change_simplepage")
         user.user_permissions.add(permission)
 
-        # 2. SETUP DA PÁGINA
         root_page = Page.objects.get(id=1)
         page = SimplePage(
-            title="Página de Teste com Campo Oculto",
+            title="Test page",
             slug="hidden-field-test",
-            content="conteúdo",
-            hidden_field_for_test="valor secreto",
+            content="content page",
+            hidden_field_for_test="secret value",
         )
         root_page.add_child(instance=page)
 
-        # 3. AÇÃO
         response = self.client.get(f"/admin/pages/{page.id}/edit/")
         self.assertEqual(response.status_code, 200)
 
